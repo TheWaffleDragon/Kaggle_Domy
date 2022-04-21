@@ -70,6 +70,7 @@ percent = (df_train.isnull().sum()/df_train.isnull().count()).sort_values(ascend
 missing_data = pd.concat([total, percent], axis=1, keys=['Total', 'Percent'])
 print(missing_data.head(20))
 
+
 '''
               Total    Percent
 PoolQC         1453  99.520548 --> drop - covered by PoolArea
@@ -112,6 +113,48 @@ df_train = df_train.drop(df_train.loc[df_train['Electrical'].isnull()].index)
 df_train = df_train.drop((missing_data[missing_data['Total'] > 1]).index,1)
 print(df_train.isnull().sum().max())
 
+#%% Cena, a powierzchnia 
+# Pietro
+# var = 'GrLivArea'
+# data = pd.concat([df_train['SalePrice'], df_train[var]], axis=1)
+# data.plot.scatter(x=var, y='SalePrice', ylim=(0,800000))
+
+#punkty odstające -->  SalePrize <200000 & Area>4500 Index: 1298 i 523
+
+df_train = df_train.drop(df_train[df_train['Id'] == 1299].index)
+df_train = df_train.drop(df_train[df_train['Id'] == 524].index)
+
+#piwnica
+# var = 'TotalBsmtSF'
+# data = pd.concat([df_train['SalePrice'], df_train[var]], axis=1)
+# data.plot.scatter(x=var, y='SalePrice', ylim=(0,800000))
+
+#punkty odstające -->  SalePrize <200000 & Area>4500 Index: 332 i 496 i 440
+#df_train.sort_values(by = 'TotalBsmtSF', ascending = False)[:3]
+
+df_train = df_train.drop(df_train[df_train['Id'] == 333].index)
+df_train = df_train.drop(df_train[df_train['Id'] == 497].index)
+df_train = df_train.drop(df_train[df_train['Id'] == 441].index)
+
+#%% Cena za metr
+df_train['SqrPrice'] = df_train['SalePrice']/(df_train['GrLivArea']+df_train['TotalBsmtSF'])
+
+corrmat = df_train.corr()
+f, ax = plt.subplots(figsize=(10, 20))
+sns.heatmap(corrmat, vmax=.8, square=True);
+
+k =15 #number of variables for heatmap
+cols = corrmat.nlargest(k, 'SqrPrice')['SqrPrice'].index
+cm = np.corrcoef(df_train[cols].values.T)
+sns.set(font_scale=1.25)
+hm = sns.heatmap(cm, cbar=True, annot=True, square=True, fmt='.2f', annot_kws={'size': 10}, yticklabels=cols.values, xticklabels=cols.values)
+plt.show()
+
 #%%
+sns.distplot(df_train['SqrPrice'] , fit=norm)
+print(df_train['SqrPrice'].describe())
 
-
+sns.set()
+cols = ['SqrPrice', 'OverallQual', 'YearBuilt', 'YearRemodAdd', 'GarageCars']
+sns.pairplot(df_train[cols], size = 2.5)
+plt.show()
